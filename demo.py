@@ -1,4 +1,4 @@
-SMART PLANT CARE 
+#SMART PLANT CARE 
 #MFC
 #CAMM
 #JGRA
@@ -36,12 +36,9 @@ for i in range(0,5):
         print "No internet connection, retrying..."
         time.sleep(5)
 
-#Api_client_key ='96b2b5ca0a40f72f7fd3f303fbbf47b98eab3247'
-#Api_Hum_var =['580a233f76254206cdeaa181']  
-#api = ApiClient(Api_client_key)
-
 a0 = mraa.Aio(0)
 a1 = mraa.Aio(1)
+a2 = mraa.Aio(2)
 # digital output - buzzer
 buzPin = mraa.Gpio(8)
 buzPin.dir(mraa.DIR_OUT)
@@ -68,16 +65,12 @@ while (1):
 				buzPin.write(0)
        		
 
-		#print valorActualRele
-		#error, data=ubidots_parser(lastValue)
-		#print data
-		#Valorrele = pifacedigital.relays[0].value #Save relay state
-		#print lastValue[{'value'}]
-		#valorRele = relay0_control.get_values(1)
-		#print valorRele['values']
+
 		#print(luzdato)
 		#api.save_collection([{'variable': '580a233f76254206cdeaa181','value':luzdato},{'variable': '580a5bcd7625421558337722','value'humedato}])
-		api.save_collection([{'variable': '580a233f76254206cdeaa181','value':a1.read()}, {'variable': '580a5bcd7625421558337722','value':a0.read()}])
+		api.save_collection([{'variable': '580a233f76254206cdeaa181','value':a1.read()}, {'variable': '580a5bcd7625421558337722','value':a0.read()},{'variable':'580be0e07625425bffac0aca','value':a2.read()}])
+
+		
 
 
 	#for i in Api_Hum_var:
