@@ -113,6 +113,8 @@ current_mode = MAN
 out_luzActual = 0
 out_humActual = 0
 out_tempActual = 0
+out_nivActual = 0	# Nivel del tanque de agua Low=0 y Normal=1
+nivel = 0
 
 #Inicio
 #Conexion con ubidots
@@ -126,11 +128,18 @@ for i in range(0,5):
     except:
         print ("No internet connection, retrying...")
         time.sleep(5)
+
 #Analog Input
 #a0 = mraa.Aio(0)
 myMoisture = upmMoisture.GroveMoisture(0)
 light = grove.GroveLight(1)
 temp = grove.GroveTemp(2)
+
+# Digital Input
+LevelPin = mraa.Gpio(13)
+LevelPin.dir(mraa.DIR_IN)
+nivel=LevelPin.read()
+
 # Digital output
 ValvePin = mraa.Gpio(8)
 ValvePin.dir(mraa.DIR_OUT)
@@ -140,23 +149,24 @@ LedsPin = mraa.Gpio(3)
 LedsPin.dir(mraa.DIR_OUT)
 LedsPin.write(out_luzActual)
 
-
 VentiladorPin = mraa.Gpio(7)
 VentiladorPin.dir(mraa.DIR_OUT)
 VentiladorPin.write(out_tempActual)
 
-
+AlarmPin = mraa.Gpio(4)
+AlarmPin.dir(mraa.DIR_OUT)
+AlarmPin.write(0)
 
 while (1):
 	#ACA DEBE IR LA ADQUISICION DE VARIABLES DE SENSORES Y DEL MODO TARGET DE UBIDOTS
-	humedato = myMoisture.value()/4
+	humedato = myMoisture.value()
 	tempdato=0 #asignacion temporal
 	target_mode_ubi = api.get_variable('5811165d762542316ec08081')
 	lastValue = target_mode_ubi.get_values(1) 
 	target_mode = lastValue [0]['value']
 	luzActual=light.value()
 	tempActual=temp.value()
-	
+	nivel=LevelPin.read()
 	#print(tempActual)
 	#target_mode = target_mode_ubi
 	#DESPUES DE LA ADQUISICION SE ACTUALIZAN LAS VARIABLES DE UBIDOTS, SE PUEDE HACER TAMBIEN AL FINAL DE TODO DENTRO DEL WHILE
@@ -187,14 +197,23 @@ while (1):
 	print("salida valve ",out_hum)
 	print("salida luz ",out_luz)
 	print("salida temp",out_temp)
+	print("salida nivel",out_nivActual)
 
-
-	if (out_hum==0.0):
-		ValvePin.write(0)
-		print ("apago valve")
+	if (nivel==1):
+		if (out_hum==0.0):
+			ValvePin.write(0)
+			print ("apago valve")
+		else:
+			ValvePin.write(1)
+			print ("prendio valve")
+		print("Nivel OK")
+		out_nivActual = 0
+		AlarmPin.write(0)
 	else:
-		ValvePin.write(1)
-		print ("prendio valve")
+		print("Nivel de tanque bajo")
+		out_nivActual = 1
+		AlarmPin.write(1)
+		ValvePin.write(0)	
 
 	if (out_luz==0.0):
 		LedsPin.write(0)
@@ -214,6 +233,6 @@ while (1):
 
 	#LedsPin.write(out_luz)
 	#VentiladorPin.write(out_temp)
-	api.save_collection([{'variable': '580a5bcd7625421558337722','value':humedato}, {'variable': '580a233f76254206cdeaa181','value':luzActual},{'variable': '580be0e07625425bffac0aca','value':tempActual}])
+	api.save_collection([{'variable': '580a5bcd7625421558337722','value':humedato}, {'variable': '580a233f76254206cdeaa181','value':luzActual},{'variable': '580be0e07625425bffac0aca','value':tempActual},{'variable':'5822471076254211b9c52b99', 'value':out_nivActual}])
 
 	
